@@ -16,7 +16,6 @@ class TokenizerService(spellCheckerSvc: SpellCheckerService, products: List[Stri
       .split(" ")
       .map(word => {
         val normalizedWord = spellCheckerSvc.getClosestWordInDictionary(word)
-        println(s"Normalized $word to $normalizedWord")
         normalizedWord match
           case normalizedWord if normalizedWord.forall(_.isDigit) => (normalizedWord, Token.NUM)
           case normalizedWord if normalizedWord.startsWith("_") => (normalizedWord, Token.PSEUDO)

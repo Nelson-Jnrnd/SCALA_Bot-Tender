@@ -48,7 +48,6 @@ class SpellCheckerImpl(val dictionary: Map[String, String]) extends SpellChecker
     if dictionary.contains(misspelledWord) then return dictionary(misspelledWord)
 
     val closestWord = dictionary.keys.minBy(stringDistance(_, misspelledWord))
-    println(s"Did you mean '$closestWord'?")
     dictionary(closestWord)
   }
 end SpellCheckerImpl
