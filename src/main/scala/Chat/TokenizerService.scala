@@ -3,6 +3,11 @@ package Chat
 import Chat.Token.*
 import Utils.SpellCheckerService
 
+/**
+ * Service that tokenize the user input.
+ * @param spellCheckerSvc The service used to correct the user input
+ * @param products The list of products that the user can order
+ */
 class TokenizerService(spellCheckerSvc: SpellCheckerService, products: List[String]):
   /**
     * Separate the user's input into tokens
@@ -11,8 +16,8 @@ class TokenizerService(spellCheckerSvc: SpellCheckerService, products: List[Stri
     */
   def tokenize(input: String): Tokenized = {
     val tokens = input
-      .replaceAll("[.,!?*']", " ")
-      .replaceAll(" +", " ")
+      .replaceAll("[.,!?*']", " ") // remove punctuation
+      .replaceAll(" +", " ") // remove multiple spaces
       .split(" ")
       .map(word => {
         val normalizedWord = spellCheckerSvc.getClosestWordInDictionary(word)

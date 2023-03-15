@@ -37,6 +37,9 @@ object MainTokenizer:
 
   def main(args: Array[String]): Unit =
     val spellCheckerSvc: SpellCheckerService = SpellCheckerImpl(Dictionary.dictionary)
+    // We decided to set the list of products in the main function, 
+    // because it is not the responsibility of the TokenizerService to know the list of products.
+    // The TokenizerService should only know how to tokenize the user input.
     val tokenizerSvc: TokenizerService = TokenizerService(spellCheckerSvc, List("biere", "croissant"))
 
     println("Bienvenue au Chill-Out !")
