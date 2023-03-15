@@ -10,7 +10,14 @@ trait Tokenized:
     */
   def nextToken(): (String, Token)
 
-class TokenizedImpl(val tokens: Array[(String, Token)]) extends Tokenized:
-  // TODO - Part 1 Step 3
-  def nextToken(): (String, Token) = ???
+class TokenizedImpl(var tokens: Array[(String, Token)]) extends Tokenized:
+  def nextToken(): (String, Token) = {
+    if (tokens.isEmpty) {
+      ("EOL", Token.EOL)
+    } else {
+      val token = tokens.head
+      tokens = tokens.tail
+      token
+    }
+  }
 end TokenizedImpl

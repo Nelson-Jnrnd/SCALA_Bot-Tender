@@ -37,7 +37,7 @@ object MainTokenizer:
 
   def main(args: Array[String]): Unit =
     val spellCheckerSvc: SpellCheckerService = SpellCheckerImpl(Dictionary.dictionary)
-    val tokenizerSvc: TokenizerService = TokenizerService(spellCheckerSvc)
+    val tokenizerSvc: TokenizerService = TokenizerService(spellCheckerSvc, List("biere", "croissant"))
 
     println("Bienvenue au Chill-Out !")
 
