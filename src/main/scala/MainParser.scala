@@ -45,7 +45,7 @@ object MainParser:
 
   def main(args: Array[String]): Unit =
     val spellCheckerSvc: SpellCheckerService = new SpellCheckerImpl(Dictionary.dictionary)
-    val tokenizerSvc: TokenizerService = new TokenizerService(spellCheckerSvc)
+    val tokenizerSvc: TokenizerService = new TokenizerService(spellCheckerSvc, List("biere", "croissant"))
     val productSvc: ProductService = new ProductImpl()
     val accountSvc: AccountService = new AccountImpl()
     val sessionSvc: SessionService = new SessionImpl()
