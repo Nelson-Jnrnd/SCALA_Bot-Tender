@@ -51,18 +51,20 @@ class SpellCheckerImpl(val dictionary: Map[String, String]) extends SpellChecker
   /**
     * Get the syntactically closest word in the dictionary from the given misspelled word, using the "stringDistance"
     * function. If the word is a number or a pseudonym (indicated by a leading underscore), this function just returns it.
-    * @param misspelledWord the mispelled word to correct
+    * @param word the mispelled word to correct
     * @return the closest normalized word from "mispelledWord"
     */
-  def getClosestWordInDictionary(misspelledWord: String): String = {
-    if misspelledWord.forall(_.isDigit) 
-    || misspelledWord.startsWith("_") then return misspelledWord
+  def getClosestWordInDictionary(word: String): String = {
+    // get the word in lowercase
+    val lowercaseWord = word.toLowerCase
+    if lowercaseWord.forall(_.isDigit) 
+    || lowercaseWord.startsWith("_") then return lowercaseWord
     
     // If the word is in the dictionary, return it
-    if dictionary.contains(misspelledWord) then return dictionary(misspelledWord)
+    if dictionary.contains(lowercaseWord) then return dictionary(lowercaseWord)
 
     // Otherwise, return the closest word in the dictionary
-    val closestWord = dictionary.keys.minBy(stringDistance(_, misspelledWord))
+    val closestWord = dictionary.keys.minBy(stringDistance(_, lowercaseWord))
     dictionary(closestWord)
   }
 end SpellCheckerImpl

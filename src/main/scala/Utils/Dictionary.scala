@@ -11,23 +11,75 @@ object Dictionary:
     "bonjour" -> "bonjour",
     "hello" -> "bonjour",
     "yo" -> "bonjour",
+
     "je" -> "je",
     "j" -> "je",
+
     "suis" -> "etre",
+
     "veux" -> "vouloir",
     "aimerais" -> "vouloir",
+    "voudrais" -> "vouloir",
+
     "assoiffé" -> "assoiffe",
     "assoiffée" -> "assoiffe",
+
     "affamé" -> "affame",
     "affamée" -> "affame",
+
     "bière" -> "biere",
     "bières" -> "biere",
+
     "croissant" -> "croissant",
     "croissants" -> "croissant",
+
     "et" -> "et",
+
     "ou" -> "ou",
+
     "svp" -> "svp",
     "stp" -> "svp",
     // TODO - Part 2 Step 1
+    "maison" -> "maison",
+    "cailler" -> "cailler",
+    "farmer" -> "farmer",
+    "boxer" -> "boxer",
+    "wittekop" -> "wittekop",
+    "punkipa" -> "punkipa",
+    "jackhammer" -> "jackhammer",
+    "ténébreuse" -> "tenebreuse",
+
+    "me" -> "me",
+    "m'" -> "me",
+
+    "appelle" -> "appeler",
+    
+    "commander" -> "commander",
+    
+    "connaître" -> "connaitre",
+
+    "mon" -> "mon",
+    "ma" -> "mon", // maybe remove
+    "mes" -> "mon", // maybe remove
+
+    "solde" -> "solde",
+
+    "combien" -> "combien",
+
+    "coûte" -> "couter",
+    "coute" -> "couter",
+    "coutent" -> "couter",
+    "coûtent" -> "couter",
+
+    "quel" -> "quel",
+
+    "le" -> "le",
+
+    "prix" -> "prix",
+
+    "de" -> "de",
+    "des" -> "de",
+    "d'" -> "de",
+    "du" -> "de",
   )
 end Dictionary

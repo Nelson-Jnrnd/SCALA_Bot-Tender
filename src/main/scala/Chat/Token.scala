@@ -21,5 +21,20 @@ enum Token:
        NUM,
        EOL,
        UNKNOWN,
-       BAD
+       BAD,
+       // Labo 2
+       QUEL,
+       LE,
+       PRIX,
+       DE,
+       COMBIEN,
+       COUTER,
+       COMMANDER,
+       CONNAITRE,
+       MON,
+       SOLDE,
+       ME,
+       APPELER,
+       MARQUE
+       
 end Token

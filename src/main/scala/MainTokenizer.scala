@@ -40,7 +40,10 @@ object MainTokenizer:
     // We decided to set the list of products in the main function, 
     // because it is not the responsibility of the TokenizerService to know the list of products.
     // The TokenizerService should only know how to tokenize the user input.
-    val tokenizerSvc: TokenizerService = TokenizerService(spellCheckerSvc, List("biere", "croissant"))
+    val tokenizerSvc: TokenizerService = TokenizerService(
+      spellCheckerSvc,
+     List("biere", "croissant"),
+     List("maison" ,"cailler" ,"farmer","boxer" ,"wittekop" ,"punkipa" ,"jackhammer" ,"tenebreuse"))
 
     println("Bienvenue au Chill-Out !")
 
