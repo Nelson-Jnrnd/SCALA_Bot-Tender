@@ -32,35 +32,92 @@ class Parser(tokenized: Tokenized):
 
   /** the root method of the parser: parses an entry phrase */
   // TODO - Part 2 Step 4
-  def parsePhrases() : ExprTree =
-    return parsePriceAsk()
+  def parsePhrases() : ExprTree = {
     if curToken == BONJOUR then readToken()
-    if curToken == JE then
-      readToken()
-      eat(ETRE)
-      if curToken == ASSOIFFE then
-        readToken()
-        Thirsty
-      else if curToken == AFFAME then
-        readToken()
-        Hungry
-      else expected(ASSOIFFE, AFFAME)
-    else expected(BONJOUR, JE)
+    curToken match {
+      case QUEL | COMBIEN => return parsePriceAsk()
+      case JE => return parseJe()
+      case _ => expected(BONJOUR, JE)
+    }
+  }
 
   def parseOrder() : Order = {
-    if curToken == NUM then
-      val num = eat(NUM).toInt
-      val product = eat(PRODUIT)
-      if curToken == MARQUE then
-        val marque = eat(MARQUE)
-        Order(List(Product(product, marque, num)))
-      else Order(List(Product(product, "", num)))
-    else expected(NUM, PRODUIT, MARQUE)
+    val num = curToken match {
+      case NUM => eat(NUM).toInt
+      case LE => {
+        eat(LE)
+        1
+      }
+      case _ => expected(NUM, LE)
+    }
+    val product = eat(PRODUIT)
+    val marque = curToken match {
+      case MARQUE => eat(MARQUE)
+      case _ => ""
+    }
+    Order(List(Product(product, marque, num)))
   }
+
   def parsePriceAsk() : ExprTree = {
     if curToken == COMBIEN then
       readToken()
       eat(COUTER)
       Price(parseOrder())
-    else expected(COMBIEN, COUTER)
+    else if curToken == QUEL then
+      readToken()
+      eat(ETRE)
+      eat(LE)
+      eat(PRIX)
+      eat(DE)
+      Price(parseOrder())
+    else expected(COMBIEN, COUTER, QUEL, ETRE, PRIX)
+  }
+
+  def parseJe() : ExprTree = {
+    if curToken != JE then expected(JE)
+    eat(JE)
+    curToken match {
+      case ETRE => {
+        eat(ETRE)
+        curToken match {
+          case ASSOIFFE => {
+            readToken()
+            Thirsty
+          }
+          case AFFAME => {
+            readToken()
+            Hungry
+          }
+          case PSEUDO => {
+            Identification(eat(PSEUDO))
+          }
+          case _ => expected(ASSOIFFE, AFFAME)
+        }
+      }
+      case ME => {
+        eat(ME)
+        eat(APPELER)
+        Identification(eat(PSEUDO))
+      }
+      case VOULOIR => parseVouloir()
+      case _ => expected(ETRE, ME)
+    }
+  }
+
+  def parseVouloir() : ExprTree = {
+    if curToken != VOULOIR then expected(VOULOIR)
+    eat(VOULOIR)
+    curToken match {
+      case COMMANDER => {
+        eat(COMMANDER)
+        parseOrder()
+      }
+      case CONNAITRE => {
+        eat(CONNAITRE)
+        eat(MON)
+        eat(SOLDE)
+        Solde
+      }
+      case _ => expected(COMMANDER, CONNAITRE)
+    }
   }

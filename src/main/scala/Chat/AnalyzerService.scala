@@ -35,6 +35,15 @@ class AnalyzerService(productSvc: ProductService,
       case Thirsty => "Eh bien, la chance est de votre côté, car nous offrons les meilleures bières de la région !"
       case Hungry => "Pas de soucis, nous pouvons notamment vous offrir des croissants faits maisons !"
       case Price(order) => s"Le prix total de votre commande est de ${computePrice(order)} euros."
+      case Identification(pseudo) => {
+        //session.pseudo = pseudo
+        s"Bonjour $pseudo !"
+      }
+      case Solde => s"Tient ton solde too buid..."
+      case Order(products) => {
+        val productsStr = products.map(p => s"${p.quantity} ${p.product} ${p.brand}").mkString(", ")
+        s"Vous avez commandé $productsStr."
+      }
       case _ => "Je ne comprends pas votre demande."
     }
       

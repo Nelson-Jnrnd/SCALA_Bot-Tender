@@ -14,6 +14,7 @@ object ExprTree:
   case object Thirsty extends ExprTree
   case object Hungry extends ExprTree
   case object Politeness extends ExprTree
+  case object Solde extends ExprTree
 
   case class Or(left: ExprTree, right: ExprTree) extends ExprTree
   case class And(left: ExprTree, right: ExprTree) extends ExprTree
