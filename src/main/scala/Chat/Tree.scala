@@ -13,3 +13,12 @@ object ExprTree:
   // Example cases
   case object Thirsty extends ExprTree
   case object Hungry extends ExprTree
+  case object Politeness extends ExprTree
+
+  case class Or(left: ExprTree, right: ExprTree) extends ExprTree
+  case class And(left: ExprTree, right: ExprTree) extends ExprTree
+  case class Product(product: String, brand: String, quantity: Int) extends ExprTree  
+  case class Order(products: List[Product]) extends ExprTree
+  case class Identification(pseudo: String) extends ExprTree
+  case class Price(order: Order) extends ExprTree
+

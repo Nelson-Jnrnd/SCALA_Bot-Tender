@@ -11,7 +11,16 @@ class AnalyzerService(productSvc: ProductService,
     * @return the result of the computation
     */
   // TODO - Part 2 Step 3
-  def computePrice(t: ExprTree): Double = ???
+  def computePrice(t: ExprTree): Double = {
+    t match {
+      case Product(product, brand, quantity) => productSvc.getPrice(product, brand) * quantity
+      case Order(products) => products.map(computePrice).sum
+      case Price(order) => computePrice(order)
+      case Or(left, right) => math.min(computePrice(left), computePrice(right))
+      case And(left, right) => computePrice(left) + computePrice(right)
+      case _ => 0.0
+    }
+  }
 
   /**
     * Return the output text of the current node, in order to write it in console.
@@ -20,9 +29,13 @@ class AnalyzerService(productSvc: ProductService,
   def reply(session: Session)(t: ExprTree): String =
     // you can use this to avoid having to pass the session when doing recursion
     val inner: ExprTree => String = reply(session)
-    t match
+    t match {
       // TODO - Part 2 Step 3
       // Example cases
       case Thirsty => "Eh bien, la chance est de votre côté, car nous offrons les meilleures bières de la région !"
       case Hungry => "Pas de soucis, nous pouvons notamment vous offrir des croissants faits maisons !"
+      case Price(order) => s"Le prix total de votre commande est de ${computePrice(order)} euros."
+      case _ => "Je ne comprends pas votre demande."
+    }
+      
 end AnalyzerService

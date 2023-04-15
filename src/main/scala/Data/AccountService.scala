@@ -32,10 +32,27 @@ trait AccountService:
     */
   def purchase(user: String, amount: Double): Double
 
+class CouldNotFindAccountException(account: String) extends Exception(s"Could not find account $account")
+class NotEnoughMoneyException(account: String, amount: Double) extends Exception(s"Not enough money in account $account to purchase $amount")
+class AccountAlreadyExistsException(account: String) extends Exception(s"Account $account already exists")
 class AccountImpl extends AccountService:
   // TODO - Part 2 Step 2
-  def getAccountBalance(user: String): Double = ???
-  def addAccount(user: String, balance: Double): Unit = ???
-  def isAccountExisting(user: String): Boolean = ???
-  def purchase(user: String, amount: Double): Double = ???
+  val accounts: mutable.Map[String, Double] = mutable.Map.empty
+  def getAccountBalance(user: String): Double = {
+    accounts.getOrElse(user, throw new CouldNotFindAccountException(user))
+  }
+  def addAccount(user: String, balance: Double): Unit = {
+    if (isAccountExisting(user)) throw new AccountAlreadyExistsException(user)
+    accounts.put(user, balance)
+  }
+  def isAccountExisting(user: String): Boolean = {
+    accounts.contains(user)
+  }
+  def purchase(user: String, amount: Double): Double = {
+    if (!isAccountExisting(user)) throw new CouldNotFindAccountException(user)
+    val balance = getAccountBalance(user)
+    if (balance < amount) throw new NotEnoughMoneyException(user, amount)
+    accounts.put(user, balance - amount)
+    balance - amount
+  }
 end AccountImpl

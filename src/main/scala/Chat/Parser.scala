@@ -33,6 +33,7 @@ class Parser(tokenized: Tokenized):
   /** the root method of the parser: parses an entry phrase */
   // TODO - Part 2 Step 4
   def parsePhrases() : ExprTree =
+    return parsePriceAsk()
     if curToken == BONJOUR then readToken()
     if curToken == JE then
       readToken()
@@ -45,3 +46,21 @@ class Parser(tokenized: Tokenized):
         Hungry
       else expected(ASSOIFFE, AFFAME)
     else expected(BONJOUR, JE)
+
+  def parseOrder() : Order = {
+    if curToken == NUM then
+      val num = eat(NUM).toInt
+      val product = eat(PRODUIT)
+      if curToken == MARQUE then
+        val marque = eat(MARQUE)
+        Order(List(Product(product, marque, num)))
+      else Order(List(Product(product, "", num)))
+    else expected(NUM, PRODUIT, MARQUE)
+  }
+  def parsePriceAsk() : ExprTree = {
+    if curToken == COMBIEN then
+      readToken()
+      eat(COUTER)
+      Price(parseOrder())
+    else expected(COMBIEN, COUTER)
+  }
