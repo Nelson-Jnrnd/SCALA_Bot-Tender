@@ -14,7 +14,6 @@ class AnalyzerService(productSvc: ProductService,
   def computePrice(t: ExprTree): Double = {
     t match {
       case Product(product, brand, quantity) => productSvc.getPrice(product, brand) * quantity
-      case Order(products) => products.map(computePrice).sum
       case Price(order) => computePrice(order)
       case Or(left, right) => math.min(computePrice(left), computePrice(right))
       case And(left, right) => computePrice(left) + computePrice(right)
@@ -40,10 +39,9 @@ class AnalyzerService(productSvc: ProductService,
         s"Bonjour $pseudo !"
       }
       case Solde => s"Tient ton solde too buid..."
-      case Order(products) => {
-        val productsStr = products.map(p => s"${p.quantity} ${p.product} ${p.brand}").mkString(", ")
-        s"Vous avez commandé $productsStr."
-      }
+      case Product(product, brand, quantity) => s"Vous avez commandé $quantity $product de la marque $brand."
+      case Or(left, right) => s"${inner(left)} ${inner(right)}"
+      case And(left, right) => s"${inner(left)} ${inner(right)}"
       case _ => "Je ne comprends pas votre demande."
     }
       

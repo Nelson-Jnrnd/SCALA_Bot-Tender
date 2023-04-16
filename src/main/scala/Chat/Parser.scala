@@ -41,7 +41,7 @@ class Parser(tokenized: Tokenized):
     }
   }
 
-  def parseOrder() : Order = {
+  def parseOrder() : ExprTree = {
     val num = curToken match {
       case NUM => eat(NUM).toInt
       case LE => {
@@ -55,7 +55,17 @@ class Parser(tokenized: Tokenized):
       case MARQUE => eat(MARQUE)
       case _ => ""
     }
-    Order(List(Product(product, marque, num)))
+    return curToken match {
+      case ET => {
+        eat(ET)
+        And(Product(product, marque, num), parseOrder())
+      }
+      case OU => {
+        eat(OU)
+        Or(Product(product, marque, num), parseOrder())
+      }
+      case _ => Product(product, marque, num)
+    }
   }
 
   def parsePriceAsk() : ExprTree = {
