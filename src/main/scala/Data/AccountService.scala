@@ -36,7 +36,7 @@ class CouldNotFindAccountException(account: String) extends Exception(s"Could no
 class NotEnoughMoneyException(account: String, amount: Double) extends Exception(s"Not enough money in account $account to purchase $amount")
 class AccountAlreadyExistsException(account: String) extends Exception(s"Account $account already exists")
 class AccountImpl extends AccountService:
-  // TODO - Part 2 Step 2
+
   val accounts: mutable.Map[String, Double] = mutable.Map.empty
   def getAccountBalance(user: String): Double = {
     accounts.getOrElse(user, throw new CouldNotFindAccountException(user))

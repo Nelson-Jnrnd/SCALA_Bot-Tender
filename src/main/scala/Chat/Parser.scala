@@ -30,36 +30,98 @@ class Parser(tokenized: Tokenized):
     val expectedTokens = tokens.mkString(" or ")
     throw new UnexpectedTokenException(s"Expected: $expectedTokens, found: $curToken")
 
-  /** the root method of the parser: parses an entry phrase */
-  // TODO - Part 2 Step 4
+  /** the root method of the parser: parses an entry phrase
+   * @return the parsed expression tree
+   * We divided the process for each branch of the grammar.
+   */
   def parsePhrases() : ExprTree = {
-    if curToken == BONJOUR then readToken()
+    if curToken == BONJOUR then readToken() // BONJOUR is optional :'(
     curToken match {
-      case QUEL | COMBIEN => return parsePriceAsk()
+      // Quel est le prix and Combien ça coûte are the same request so we group them together
+      case QUEL | COMBIEN => return parsePriceAsk() 
       case JE => return parseJe()
       case _ => expected(BONJOUR, JE)
     }
   }
 
-  private def parseProductExpr(): ExprTree = {
-    val num = curToken match {
-      case NUM => eat(NUM).toInt
-      case LE => {
-        eat(LE)
-        1
-      }
-      case _ => expected(NUM, LE)
-    }
-
-    val product = eat(PRODUIT)
-    val marque = curToken match {
-      case MARQUE => eat(MARQUE)
-      case _ => ""
-    }
-
-    Product(product, marque, num)
+  /**
+    * Parses the two branches of the grammar that wants to know the price of an order
+    * then calls parseOrderExpr() to parse the order
+    */
+    private def parsePriceAsk() : ExprTree = {
+    if curToken == COMBIEN then
+      readToken()
+      eat(COUTER)
+    else if curToken == QUEL then
+      readToken()
+      eat(ETRE)
+      eat(LE)
+      eat(PRIX)
+      eat(DE)
+    else expected(COMBIEN, COUTER, QUEL, ETRE, PRIX)
+    Price(parseOrderExpr())
   }
 
+  /**
+    * Parses the branches of the grammar that starts with "Je"
+    * The sub-branches could reasonably be separated into different methods 
+    * but we decided to keep them together as there are not that many of them and they are not that long
+    * In the case of the command branch, we call parseOrderExpr() to parse the order
+    */
+    private def parseJe() : ExprTree = {
+    if curToken != JE then expected(JE)
+    eat(JE)
+    curToken match {
+      case ETRE => {
+        eat(ETRE)
+        curToken match {
+          case ASSOIFFE => {
+            readToken()
+            Thirsty
+          }
+          case AFFAME => {
+            readToken()
+            Hungry
+          }
+          case PSEUDO => {
+            Identification(eat(PSEUDO)) // capture the pseudo entered by the user
+          }
+          case _ => expected(ASSOIFFE, AFFAME, PSEUDO)
+        }
+      }
+      case ME => {
+        eat(ME)
+        eat(APPELER)
+        Identification(eat(PSEUDO))
+      }
+      case VOULOIR => {
+        eat(VOULOIR)
+        curToken match {
+          case COMMANDER => {
+            eat(COMMANDER)
+            Order(parseOrderExpr()) // Parse the order
+          }
+          case CONNAITRE => {
+            eat(CONNAITRE)
+            eat(MON)
+            eat(SOLDE)
+            Solde
+          }
+          case _ => expected(COMMANDER, CONNAITRE)
+        }
+      }
+      case _ => expected(ETRE, ME)
+    }
+  }
+
+  /**
+    * Parse an order, to fix the issue of left associativity 
+    * it first parse the first product before checking if there is an and/or
+    * if there is we parse the product following it
+    * then we join the subtrees with the corresponding and/or node
+    * 
+    * We repeat this process as long as we need to
+    */
   private def parseOrderExpr(): ExprTree = {
     var leftExpr = parseProductExpr()
 
@@ -78,66 +140,26 @@ class Parser(tokenized: Tokenized):
     leftExpr
   }
 
-  private def parsePriceAsk() : ExprTree = {
-    if curToken == COMBIEN then
-      readToken()
-      eat(COUTER)
-      Price(parseOrderExpr())
-    else if curToken == QUEL then
-      readToken()
-      eat(ETRE)
-      eat(LE)
-      eat(PRIX)
-      eat(DE)
-      Price(parseOrderExpr())
-    else expected(COMBIEN, COUTER, QUEL, ETRE, PRIX)
-  }
-
-  private def parseJe() : ExprTree = {
-    if curToken != JE then expected(JE)
-    eat(JE)
-    curToken match {
-      case ETRE => {
-        eat(ETRE)
-        curToken match {
-          case ASSOIFFE => {
-            readToken()
-            Thirsty
-          }
-          case AFFAME => {
-            readToken()
-            Hungry
-          }
-          case PSEUDO => {
-            Identification(eat(PSEUDO))
-          }
-          case _ => expected(ASSOIFFE, AFFAME)
-        }
+  /**
+    * Parse a product, if there is a singular determinant the number is 1
+    * if there is no marque we set it to None
+    */
+  private def parseProductExpr(): ExprTree = {
+    val num = curToken match {
+      case NUM => eat(NUM).toInt
+      case LE => {
+        eat(LE)
+        1
       }
-      case ME => {
-        eat(ME)
-        eat(APPELER)
-        Identification(eat(PSEUDO))
-      }
-      case VOULOIR => parseVouloir()
-      case _ => expected(ETRE, ME)
+      case _ => expected(NUM, LE)
     }
-  }
 
-  private def parseVouloir() : ExprTree = {
-    if curToken != VOULOIR then expected(VOULOIR)
-    eat(VOULOIR)
-    curToken match {
-      case COMMANDER => {
-        eat(COMMANDER)
-        Order(parseOrderExpr())
-      }
-      case CONNAITRE => {
-        eat(CONNAITRE)
-        eat(MON)
-        eat(SOLDE)
-        Solde
-      }
-      case _ => expected(COMMANDER, CONNAITRE)
+    val product = eat(PRODUIT)
+  
+    val optionMarque = curToken match {
+      case MARQUE => Some(eat(MARQUE))
+      case _ => None
     }
+  
+    Product(product, optionMarque, num)
   }

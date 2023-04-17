@@ -13,14 +13,19 @@ class AnalyzerService(productSvc: ProductService,
     * For example if we had a "+" node, we would add the values of its two children, then return the result.
     * @return the result of the computation
     */
-  // TODO - Part 2 Step 3
   def computePrice(t: ExprTree): Double = {
     t match {
-      case Product(product, brand, quantity) => productSvc.getPrice(product, brand) * quantity
+      case Product(product, brand, quantity) => {
+        brand match {
+          case None => productSvc.getPrice(product, productSvc.getDefaultBrand(product)) * quantity
+          case Some(brand) => productSvc.getPrice(product, brand) * quantity
+        }
+      }
       case Price(order) => computePrice(order)
-      case Or(left, right) => math.min(computePrice(left), computePrice(right))
+      case Or(left, right) => math.min(computePrice(left), computePrice(right)) // We take the cheapest product
       case And(left, right) => computePrice(left) + computePrice(right)
       case _ => 0.0
+      // In our implementation, Order is not a computational node it either has a Product child or an Or/And child
     }
   }
 
@@ -32,13 +37,12 @@ class AnalyzerService(productSvc: ProductService,
     // you can use this to avoid having to pass the session when doing recursion
     val inner: ExprTree => String = reply(session)
     t match {
-      // TODO - Part 2 Step 3
       // Example cases
       case Thirsty => "Eh bien, la chance est de votre côté, car nous offrons les meilleures bières de la région !"
       case Hungry => "Pas de soucis, nous pouvons notamment vous offrir des croissants faits maisons !"
       case Price(order) => s"Le prix total de votre commande est de ${computePrice(order)} CHF."
       case Identification(pseudo) => {
-        if !accountSvc.isAccountExisting(pseudo) then
+        if !accountSvc.isAccountExisting(pseudo) then // If the account doesn't exist, we create it
           accountSvc.addAccount(pseudo, startingSolde)
         session.setCurrentUser(pseudo)
         val trimmed = pseudo.drop(1)
@@ -51,15 +55,14 @@ class AnalyzerService(productSvc: ProductService,
         }
       }
       case Product(product, brand, quantity) =>{
-        if brand == "" then
-          s"$quantity $product ${productSvc.getDefaultBrand(product)}"
-        else
-          s"$quantity $product $brand"
+        brand match {
+          case None => s"$quantity $product ${productSvc.getDefaultBrand(product)}"
+          case Some(brand) => s"$quantity $product $brand"
+        }
       }
-      case Order(order) => {
+      case Order(order) => { // order is either a Product or an Or/And node
         session.getCurrentUser match {
           case Some(user) => {
-            println(order)
             val price = computePrice(order)
             try {
               accountSvc.purchase(user, price)
@@ -74,7 +77,6 @@ class AnalyzerService(productSvc: ProductService,
       }
       case Or(left, right) => s"${inner(left)} ou ${inner(right)}"
       case And(left, right) => s"${inner(left)} et ${inner(right)}"
-      case _ => "Je ne comprends pas votre demande."
     }
       
 end AnalyzerService
