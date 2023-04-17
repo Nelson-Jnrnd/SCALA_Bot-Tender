@@ -78,7 +78,7 @@ class Parser(tokenized: Tokenized):
     leftExpr
   }
 
-  def parsePriceAsk() : ExprTree = {
+  private def parsePriceAsk() : ExprTree = {
     if curToken == COMBIEN then
       readToken()
       eat(COUTER)
@@ -93,7 +93,7 @@ class Parser(tokenized: Tokenized):
     else expected(COMBIEN, COUTER, QUEL, ETRE, PRIX)
   }
 
-  def parseJe() : ExprTree = {
+  private def parseJe() : ExprTree = {
     if curToken != JE then expected(JE)
     eat(JE)
     curToken match {
@@ -124,7 +124,7 @@ class Parser(tokenized: Tokenized):
     }
   }
 
-  def parseVouloir() : ExprTree = {
+  private def parseVouloir() : ExprTree = {
     if curToken != VOULOIR then expected(VOULOIR)
     eat(VOULOIR)
     curToken match {

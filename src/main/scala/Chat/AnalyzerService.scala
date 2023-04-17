@@ -29,7 +29,6 @@ class AnalyzerService(productSvc: ProductService,
     * @return the output text of the current node
     */
   def reply(session: Session)(t: ExprTree): String =
-    println(s"Replying to $t")
     // you can use this to avoid having to pass the session when doing recursion
     val inner: ExprTree => String = reply(session)
     t match {
@@ -37,7 +36,7 @@ class AnalyzerService(productSvc: ProductService,
       // Example cases
       case Thirsty => "Eh bien, la chance est de votre côté, car nous offrons les meilleures bières de la région !"
       case Hungry => "Pas de soucis, nous pouvons notamment vous offrir des croissants faits maisons !"
-      case Price(order) => s"Le prix total de votre commande est de ${computePrice(order)} chf."
+      case Price(order) => s"Le prix total de votre commande est de ${computePrice(order)} CHF."
       case Identification(pseudo) => {
         if !accountSvc.isAccountExisting(pseudo) then
           accountSvc.addAccount(pseudo, startingSolde)
@@ -51,7 +50,12 @@ class AnalyzerService(productSvc: ProductService,
           case None => "Ptdr t'es qui ?"
         }
       }
-      case Product(product, brand, quantity) => s"$quantity $product $brand"
+      case Product(product, brand, quantity) =>{
+        if brand == "" then
+          s"$quantity $product ${productSvc.getDefaultBrand(product)}"
+        else
+          s"$quantity $product $brand"
+      }
       case Order(order) => {
         session.getCurrentUser match {
           case Some(user) => {
@@ -59,7 +63,7 @@ class AnalyzerService(productSvc: ProductService,
             val price = computePrice(order)
             try {
               accountSvc.purchase(user, price)
-              s"Vous avez acheté ${inner(order)} pour un total de $price chf."
+              s"Vous avez acheté ${inner(order)} pour un total de $price CHF. Votre solde est maintenant de CHF ${accountSvc.getAccountBalance(user)}."
             } catch {
               case e: Data.NotEnoughMoneyException => s"Vous n'avez pas assez d'argent pour acheter ${inner(order)}."
               case e: Data.CouldNotFindAccountException => s"Faut ouvrir un compte mon coco."
