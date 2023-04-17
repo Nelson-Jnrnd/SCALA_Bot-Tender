@@ -41,7 +41,7 @@ class Parser(tokenized: Tokenized):
     }
   }
 
-  def parseOrder() : ExprTree = {
+  private def parseProductExpr(): ExprTree = {
     val num = curToken match {
       case NUM => eat(NUM).toInt
       case LE => {
@@ -50,36 +50,46 @@ class Parser(tokenized: Tokenized):
       }
       case _ => expected(NUM, LE)
     }
+
     val product = eat(PRODUIT)
     val marque = curToken match {
       case MARQUE => eat(MARQUE)
       case _ => ""
     }
-    return curToken match {
-      case ET => {
+
+    Product(product, marque, num)
+  }
+
+  private def parseOrderExpr(): ExprTree = {
+    var leftExpr = parseProductExpr()
+
+    while (curToken == ET || curToken == OU) {
+      if curToken == ET then {
         eat(ET)
-        And(Product(product, marque, num), parseOrder())
-      }
-      case OU => {
+        val rightExpr = parseProductExpr()
+        leftExpr = And(leftExpr, rightExpr)
+      } else if curToken == OU then {
         eat(OU)
-        Or(Product(product, marque, num), parseOrder())
+        val rightExpr = parseProductExpr()
+        leftExpr = Or(leftExpr, rightExpr)
       }
-      case _ => Product(product, marque, num)
     }
+
+    leftExpr
   }
 
   def parsePriceAsk() : ExprTree = {
     if curToken == COMBIEN then
       readToken()
       eat(COUTER)
-      Price(parseOrder())
+      Price(parseOrderExpr())
     else if curToken == QUEL then
       readToken()
       eat(ETRE)
       eat(LE)
       eat(PRIX)
       eat(DE)
-      Price(parseOrder())
+      Price(parseOrderExpr())
     else expected(COMBIEN, COUTER, QUEL, ETRE, PRIX)
   }
 
@@ -120,7 +130,7 @@ class Parser(tokenized: Tokenized):
     curToken match {
       case COMMANDER => {
         eat(COMMANDER)
-        parseOrder()
+        parseProductExpr()
       }
       case CONNAITRE => {
         eat(CONNAITRE)
