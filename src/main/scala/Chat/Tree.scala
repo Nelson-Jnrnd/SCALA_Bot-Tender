@@ -21,4 +21,5 @@ object ExprTree:
   case class Product(product: String, brand: String, quantity: Int) extends ExprTree  
   case class Identification(pseudo: String) extends ExprTree
   case class Price(order: ExprTree) extends ExprTree
+  case class Order(order: ExprTree) extends ExprTree
 

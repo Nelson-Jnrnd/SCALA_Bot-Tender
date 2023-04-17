@@ -29,6 +29,7 @@ class AnalyzerService(productSvc: ProductService,
     * @return the output text of the current node
     */
   def reply(session: Session)(t: ExprTree): String =
+    println(s"Replying to $t")
     // you can use this to avoid having to pass the session when doing recursion
     val inner: ExprTree => String = reply(session)
     t match {
@@ -46,27 +47,29 @@ class AnalyzerService(productSvc: ProductService,
       }
       case Solde => {
         session.getCurrentUser match {
-          case Some(user) => s"Votre solde est de ${accountSvc.getAccountBalance(user)} chf."
+          case Some(user) => s"Le montant actuel votre solde est de CHF ${accountSvc.getAccountBalance(user)}."
           case None => "Ptdr t'es qui ?"
         }
       }
-      case Product(product, brand, quantity) => {
+      case Product(product, brand, quantity) => s"$quantity $product $brand"
+      case Order(order) => {
         session.getCurrentUser match {
           case Some(user) => {
-            val price = computePrice(t)
+            println(order)
+            val price = computePrice(order)
             try {
               accountSvc.purchase(user, price)
-              s"Vous avez acheté $quantity $product de la marque $brand pour un total de $price chf."
+              s"Vous avez acheté ${inner(order)} pour un total de $price chf."
             } catch {
-              case e: Data.NotEnoughMoneyException => s"Vous n'avez pas assez d'argent pour acheter $quantity $product de la marque $brand."
+              case e: Data.NotEnoughMoneyException => s"Vous n'avez pas assez d'argent pour acheter ${inner(order)}."
               case e: Data.CouldNotFindAccountException => s"Faut ouvrir un compte mon coco."
             }
           }
           case None => "Ptdr t'es qui ?"
         }
       }
-      case Or(left, right) => s"${inner(left)} ${inner(right)}"
-      case And(left, right) => s"${inner(left)} ${inner(right)}"
+      case Or(left, right) => s"${inner(left)} ou ${inner(right)}"
+      case And(left, right) => s"${inner(left)} et ${inner(right)}"
       case _ => "Je ne comprends pas votre demande."
     }
       

@@ -130,7 +130,7 @@ class Parser(tokenized: Tokenized):
     curToken match {
       case COMMANDER => {
         eat(COMMANDER)
-        parseProductExpr()
+        Order(parseOrderExpr())
       }
       case CONNAITRE => {
         eat(CONNAITRE)
