@@ -13,5 +13,5 @@ lazy val root = project
     libraryDependencies ++= List(        
         "com.lihaoyi" %% "scalatags" % "0.12.0",
         "com.lihaoyi" %% "cask" % "0.9.1",
-    ),
+    )
   )

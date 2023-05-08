@@ -5,7 +5,9 @@ import Utils._
 
 object MainChatroom extends cask.Main:
   val spellCheckerSvc: SpellCheckerService = new SpellCheckerImpl(Dictionary.dictionary)
-  val tokenizerSvc: TokenizerService = new TokenizerService(spellCheckerSvc)
+  val tokenizerSvc: TokenizerService = new TokenizerService(spellCheckerSvc, 
+     List("biere", "croissant"),
+     List("maison" ,"cailler" ,"farmer","boxer" ,"wittekop" ,"punkipa" ,"jackhammer" ,"tenebreuse"))
   val productSvc: ProductService = new ProductImpl()
   val sessionSvc: SessionService = new SessionImpl()
   val accountSvc: AccountService = new AccountImpl()
