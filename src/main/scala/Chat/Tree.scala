@@ -15,7 +15,6 @@ sealed trait ExprTree
   * The last one is an inner node with 2 possibly recursive parameters for the Or and And operators.
   */
 object ExprTree:
-
   case object Thirsty extends ExprTree
   case object Hungry extends ExprTree
   case object Solde extends ExprTree
