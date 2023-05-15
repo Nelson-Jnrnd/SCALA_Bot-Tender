@@ -13,29 +13,54 @@ object Layouts:
      * @param content The content to be displayed in the main page.
      * @return The HTML for the main page.
      */
-    def main(content: Frag*) = 
+    def main(nav: Frag, content: Frag*) = 
         html(
             head(
                 script(src := "static/js/main.js"),
                 link(rel:="stylesheet", href:= "/static/css/main.css")
             ),
-            navbar(),
+            nav,
             body(
                 div(cls := "content")(content)
             )
         )
-    
+
     /**
       * Generates the HTML for the navbar.
       */
-    def navbar() =
+    def navbar(ref: String, text: String) =
         nav(
           a(cls := "nav-brand")("Bot-tender"),
           div(cls := "nav-item")(
-            a(href := "/")("Log in"),
+            a(href := ref)(text),
           ),
         )
+
+    def login(errorMsg: String) =
+        main(
+            navbar("/", "Message board"),
+            errorDiv(errorMsg),
+            loginForm("Login", "/login"),
+            loginForm("Register", "/register")
+        )
+
+    def loginForm(title: String, actionPath: String) = 
+        Seq(
+            h1(title),
+            form(id := "msgForm", action := actionPath, method := "post")(
+                textboxForm("Username", "Enter your username")
+        )   
+        )
+        
+    def textboxForm(field: String, placeholderText: String) =
+        Seq(
+        label(`for` := "messageInput")(field),
+        input(name := "text", id := "messageInput", `type` := "text", placeholder := placeholderText),
+        input(`type` := "submit"),
+        )
     
+    def errorDiv(errorMsg: String) =
+        div(id := "errorDiv", cls := "errorMsg")(errorMsg)
     /**
      * Generates the HTML for Message Board.
      * @param messages The messages to be displayed in the message board.
@@ -61,6 +86,7 @@ object Layouts:
       */
     def index() =
         main(
+            navbar("/login", "Login"),
             messageBoard(List()),
             form(id := "msgForm", onsubmit := "submitMessageForm(); return false;")(
                 div(id := "errorDiv", cls := "errorMsg"),

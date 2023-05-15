@@ -1,6 +1,7 @@
 package Web
 
 import Data.{AccountService, SessionService, Session}
+import Web.Decorators.getSession
 
 /**
   * Assembles the routes dealing with the users:
@@ -14,6 +15,9 @@ import Data.{AccountService, SessionService, Session}
 class UsersRoutes(accountSvc: AccountService,
                   sessionSvc: SessionService)(implicit val log: cask.Logger) extends cask.Routes:
     // TODO - Part 3 Step 3a: Display a login form and register form page for the following URL: `/login`.
+    @getSession(sessionSvc)
+    @cask.get("/login")
+    def login()(session: Session) = Layouts.login("")
     // TODO - Part 3 Step 3b: Process the login information sent by the form with POST to `/login`,
     //      set the user in the provided session (if the user exists) and display a successful or
     //      failed login page.
