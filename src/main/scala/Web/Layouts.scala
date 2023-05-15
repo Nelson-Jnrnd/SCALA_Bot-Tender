@@ -36,6 +36,13 @@ object Layouts:
           ),
         )
 
+    def loginSuccess(username: String) =
+        main(
+            navbar("/", "Message board"),
+            h1(s"Welcome $username !"),
+            p("You are now logged in !")
+        )
+
     def login(errorMsg: String) =
         main(
             navbar("/", "Message board"),
@@ -55,7 +62,7 @@ object Layouts:
     def textboxForm(field: String, placeholderText: String) =
         Seq(
         label(`for` := "messageInput")(field),
-        input(name := "text", id := "messageInput", `type` := "text", placeholder := placeholderText),
+        input(name := "username", id := "messageInput", `type` := "text", placeholder := placeholderText),
         input(`type` := "submit"),
         )
     
