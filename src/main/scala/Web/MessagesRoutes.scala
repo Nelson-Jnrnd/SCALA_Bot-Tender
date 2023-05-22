@@ -4,8 +4,6 @@ import Chat.{AnalyzerService, Parser, TokenizerService}
 import Data.{MessageService, AccountService, SessionService, Session}
 import cask.endpoints.websocket
 import castor.Context.Simple.global
-import ujson.Arr.from
-import sourcecode.Text.generate
 
 /**
   * Assembles the routes dealing with the message board:
@@ -23,6 +21,12 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
     import Decorators.getSession
 
     val subscribers = new scala.collection.mutable.HashSet[cask.WsChannelActor]()
+
+    def updateMessages() =
+        val last20 = msgSvc.getLatestMessages(20)
+        subscribers.foreach(_.send(cask.Ws.Text(
+          Layouts.messageBoard(last20).toString
+        )))
 
     @getSession(sessionSvc) // This decorator fills the `(session: Session)` part of the `index` method.
     @cask.get("/")
@@ -49,7 +53,6 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
     @getSession(sessionSvc)
     @cask.postJson("/send")
     def send(msg: ujson.Value)(session: Session) =
-        
         if (session.getCurrentUser.isEmpty) {
             ujson.Obj("success" -> false, "err" -> "You are not logged in !")
         } else if (msg.str.isEmpty) {
@@ -72,11 +75,7 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
                             mention = Option(session.getCurrentUser.get),
                             replyToId = Option(msgID)
                 )
-
-                val last20 = msgSvc.getLatestMessages(20)
-                subscribers.foreach(_.send(cask.Ws.Text(
-                  Layouts.messageBoard(last20).toString
-                  )))
+                updateMessages()
                 ujson.Obj("success" -> true, "err" -> "")
             } catch {
                 case e: Exception => ujson.Obj("success" -> false, "err" -> e.getMessage)
@@ -87,17 +86,14 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
                             msg = Layouts.message(msg.str),
                             mention = None
             )
-            val last20 = msgSvc.getLatestMessages(20)
-            subscribers.foreach(_.send(cask.Ws.Text(
-              Layouts.messageBoard(last20).toString
-              )))
+            updateMessages()
             ujson.Obj("success" -> true, "err" -> "")
         }
     // TODO - Part 3 Step 4c: Process and store the new websocket connection made to `/subscribe`
     //
     @cask.websocket("/subscribe")
     def subscribe() = cask.WsHandler { connection =>
-        print("New connection !")
+
         subscribers.add(connection)
         cask.WsActor {
           case cask.Ws.Close(_, _) => subscribers.remove(connection)
@@ -105,6 +101,12 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
     }
     // TODO - Part 3 Step 4d: Delete the message history when a GET is made to `/clearHistory`
     //
+    @getSession(sessionSvc)
+    @cask.get("/clearHistory")
+    def clearHistory()(session: Session) = {
+        msgSvc.deleteHistory()
+        updateMessages()
+    }
     // TODO - Part 3 Step 5: Modify the code of step 4b to process the messages sent to the bot (message
     //      starts with `@bot `). This message and its reply from the bot will be added to the message
     //      store together.

@@ -25,7 +25,7 @@ class UsersRoutes(accountSvc: AccountService,
     @getSession(sessionSvc)
     @cask.postForm("/login")
     def login(username: cask.FormValue)(session: Session) =
-        if (accountSvc.isAccountExisting(username.value)) {
+        if (!username.value.isEmpty() && accountSvc.isAccountExisting(username.value)) {
             session.setCurrentUser(username.value)
             Layouts.loginSuccess(username.value)
         } else {
@@ -38,7 +38,9 @@ class UsersRoutes(accountSvc: AccountService,
     @getSession(sessionSvc)
     @cask.postForm("/register")
     def register(username: cask.FormValue)(session: Session) =
-        if (accountSvc.isAccountExisting(username.value)) {
+        if (username.value.isEmpty()) {
+            Layouts.login("The specified user is empty")
+        } else if (accountSvc.isAccountExisting(username.value)) {
             Layouts.login("The specified user already exists")
         } else {
             accountSvc.addAccount(username.value, 0)
