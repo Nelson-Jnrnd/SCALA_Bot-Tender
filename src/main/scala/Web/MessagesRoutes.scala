@@ -28,7 +28,7 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
     @cask.get("/")
     def index()(session: Session) =
         // TODO - Part 3 Step 2: Display the home page (with the message board and the form to send new messages)
-        Layouts.index()
+        Layouts.index(msgSvc.getLatestMessages(20), session.getCurrentUser.isDefined)
         //session.getCurrentUser.map(u => s"You are logged in as ${u} !")
         //       .getOrElse("You are not logged in !")
         
@@ -73,8 +73,10 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
                             replyToId = Option(msgID)
                 )
 
-                val last20 = msgSvc.getLatestMessages(20).foldLeft("")(_ + _)
-                subscribers.foreach(_.send(cask.Ws.Text(last20)))
+                val last20 = msgSvc.getLatestMessages(20)
+                subscribers.foreach(_.send(cask.Ws.Text(
+                  Layouts.messageBoard(last20).toString
+                  )))
                 ujson.Obj("success" -> true, "err" -> "")
             } catch {
                 case e: Exception => ujson.Obj("success" -> false, "err" -> e.getMessage)
