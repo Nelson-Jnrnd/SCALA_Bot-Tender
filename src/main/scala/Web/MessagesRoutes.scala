@@ -3,6 +3,9 @@ package Web
 import Chat.{AnalyzerService, Parser, TokenizerService}
 import Data.{MessageService, AccountService, SessionService, Session}
 import cask.endpoints.websocket
+import castor.Context.Simple.global
+import ujson.Arr.from
+import sourcecode.Text.generate
 
 /**
   * Assembles the routes dealing with the message board:
@@ -18,6 +21,8 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
                      accountSvc: AccountService,
                      sessionSvc: SessionService)(implicit val log: cask.Logger) extends cask.Routes:
     import Decorators.getSession
+
+    val subscribers = new scala.collection.mutable.HashSet[cask.WsChannelActor]()
 
     @getSession(sessionSvc) // This decorator fills the `(session: Session)` part of the `index` method.
     @cask.get("/")
@@ -68,7 +73,8 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
                             replyToId = Option(msgID)
                 )
 
-                val last20 = msgSvc.getLatestMessages(20)
+                val last20 = msgSvc.getLatestMessages(20).foldLeft("")(_ + _)
+                subscribers.foreach(_.send(cask.Ws.Text(last20)))
                 ujson.Obj("success" -> true, "err" -> "")
             } catch {
                 case e: Exception => ujson.Obj("success" -> false, "err" -> e.getMessage)
@@ -76,6 +82,13 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
         }
     // TODO - Part 3 Step 4c: Process and store the new websocket connection made to `/subscribe`
     //
+    @cask.websocket("/subscribe")
+    def subscribe() = cask.WsHandler { connection =>
+        subscribers.add(connection)
+        cask.WsActor {
+          case cask.Ws.Close(_, _) => subscribers.remove(connection)
+        }
+    }
     // TODO - Part 3 Step 4d: Delete the message history when a GET is made to `/clearHistory`
     //
     // TODO - Part 3 Step 5: Modify the code of step 4b to process the messages sent to the bot (message
