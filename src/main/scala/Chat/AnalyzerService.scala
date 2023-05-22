@@ -42,11 +42,15 @@ class AnalyzerService(productSvc: ProductService,
       case Hungry => "Pas de soucis, nous pouvons notamment vous offrir des croissants faits maisons !"
       case Price(order) => s"Le prix total de votre commande est de ${computePrice(order)} CHF."
       case Identification(pseudo) => {
-        if !accountSvc.isAccountExisting(pseudo) then // If the account doesn't exist, we create it
-          accountSvc.addAccount(pseudo, startingSolde)
-        session.setCurrentUser(pseudo)
-        val trimmed = pseudo.drop(1)
-        s"Bonjour $trimmed !"
+        session.getCurrentUser match
+          case Some(user) => {
+            if (user == pseudo.drop(1)) {
+              s"Bien ou quoi, ${user} ?"
+            } else {
+              s"Oui, oui et moi je suis le pape."
+            }
+          }
+          case None => s"C'est bien beau mais faudrait peut-être vous identifier avant, non ?"
       }
       case Solde => {
         session.getCurrentUser match {

@@ -54,8 +54,8 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
             ujson.Obj("success" -> false, "err" -> "You are not logged in !")
         } else if (msg.str.isEmpty) {
             ujson.Obj("success" -> false, "err" -> "The message is empty !")
-        } else {
-          val msgContent = if msg.str.startsWith("@bot ") then msg.str.substring(5) else msg.str
+        } else if (msg.str.startsWith("@bot ")) {
+          val msgContent = msg.str.substring(5)
             try {
                 val tokenized = tokenizerSvc.tokenize(msgContent)
                 val parser = new Parser(tokenized)
@@ -81,11 +81,23 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
             } catch {
                 case e: Exception => ujson.Obj("success" -> false, "err" -> e.getMessage)
             }
+        } else {
+            val msgID = msgSvc.add(
+                            sender = session.getCurrentUser.get,
+                            msg = Layouts.message(msg.str),
+                            mention = None
+            )
+            val last20 = msgSvc.getLatestMessages(20)
+            subscribers.foreach(_.send(cask.Ws.Text(
+              Layouts.messageBoard(last20).toString
+              )))
+            ujson.Obj("success" -> true, "err" -> "")
         }
     // TODO - Part 3 Step 4c: Process and store the new websocket connection made to `/subscribe`
     //
     @cask.websocket("/subscribe")
     def subscribe() = cask.WsHandler { connection =>
+        print("New connection !")
         subscribers.add(connection)
         cask.WsActor {
           case cask.Ws.Close(_, _) => subscribers.remove(connection)
