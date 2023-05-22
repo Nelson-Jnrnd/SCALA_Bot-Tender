@@ -1,7 +1,8 @@
 package Web
 
-import Chat.{AnalyzerService, TokenizerService}
+import Chat.{AnalyzerService, Parser, TokenizerService}
 import Data.{MessageService, AccountService, SessionService, Session}
+import cask.endpoints.websocket
 
 /**
   * Assembles the routes dealing with the message board:
@@ -40,6 +41,39 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
     //
     //      If no error occurred, every other user is notified with the last 20 messages
     //
+    @getSession(sessionSvc)
+    @cask.postJson("/send")
+    def send(msg: ujson.Value)(session: Session) =
+        
+        if (session.getCurrentUser.isEmpty) {
+            ujson.Obj("success" -> false, "err" -> "You are not logged in !")
+        } else if (msg.str.isEmpty) {
+            ujson.Obj("success" -> false, "err" -> "The message is empty !")
+        } else {
+          val msgContent = if msg.str.startsWith("@bot ") then msg.str.substring(5) else msg.str
+            try {
+                val tokenized = tokenizerSvc.tokenize(msgContent)
+                val parser = new Parser(tokenized)
+                val expr = parser.parsePhrases()
+                val printResult = analyzerSvc.reply(session)(expr)
+                val msgID = msgSvc.add(
+                            sender = session.getCurrentUser.get,
+                            msg = Layouts.message(msgContent),
+                            mention = Option("bot")
+                )
+                val botMsgID = msgSvc.add(
+                            sender = "bot",
+                            msg = Layouts.message(printResult),
+                            mention = Option(session.getCurrentUser.get),
+                            replyToId = Option(msgID)
+                )
+
+                val last20 = msgSvc.getLatestMessages(20)
+                ujson.Obj("success" -> true, "err" -> "")
+            } catch {
+                case e: Exception => ujson.Obj("success" -> false, "err" -> e.getMessage)
+            }
+        }
     // TODO - Part 3 Step 4c: Process and store the new websocket connection made to `/subscribe`
     //
     // TODO - Part 3 Step 4d: Delete the message history when a GET is made to `/clearHistory`

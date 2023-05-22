@@ -88,6 +88,9 @@ object Layouts:
                         )
         )
 
+    def message(msgContent: String) =
+            p(msgContent)
+
     /**
       * Generates the HTML for the welcome page.
       */
