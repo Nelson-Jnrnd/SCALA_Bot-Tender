@@ -43,7 +43,7 @@ class UsersRoutes(accountSvc: AccountService,
         } else if (accountSvc.isAccountExisting(username.value)) {
             Layouts.login("The specified user already exists")
         } else {
-            accountSvc.addAccount(username.value, 0)
+            accountSvc.addAccount(username.value, 40)
             session.setCurrentUser(username.value)
             Layouts.loginSuccess(username.value)
         }
