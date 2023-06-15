@@ -35,14 +35,27 @@ class AnalyzerService(productSvc: ProductService,
     }
   }
 
+  def prepareProduct(product: String, brand: Option[String], quantity: Int): Future[Double] = {
+    if (quantity == 0) {
+      Future.successful(0.0)
+    } else {
+      FutureOps.randomSchedule(1.second, 0.5.second, 0.8).transformWith {
+        case Success(_) => {
+          println(s"Product ${product} prepared at ${java.time.LocalTime.now()}")
+          val price = computePrice(Product(product, brand, 1))
+          prepareProduct(product, brand, quantity - 1).map(_ + price)
+        }
+        case Failure(_) => {
+          println(s"Product ${product} failed to prepare at ${java.time.LocalTime.now()}")
+          prepareProduct(product, brand, quantity)
+        }
+      }
+    }
+  }
+
   def computeFuturePrice(t: ExprTree): List[Future[Double]] = {
     t match {
-      case Product(product, brand, quantity) => {
-        List(FutureOps.randomSchedule(1.second, 0.5.second, 0.8).transformWith {
-          case Success(_) => Future.successful(computePrice(t))
-          case Failure(_) => Future.failed(new Exception("Failed future"))
-        })
-      }
+      case Product(product, brand, quantity) => List(prepareProduct(product, brand, quantity))
       case Price(order) => computeFuturePrice(order)
       case Or(left, right) => // We take the cheapest product
         if (computePrice(left) < computePrice(right)) {
@@ -101,15 +114,10 @@ class AnalyzerService(productSvc: ProductService,
         session.getCurrentUser match {
           case Some(user) => {
             val price = computeFuturePrice(order)
-            // Check if any future failed
-            var completed = true
-            price.foreach((f) => {
-              f.recover((_) => completed = false)
-            })
-            val sucessfulFutures = price.map((f) => f.recover((_) => 0.0))
-            Future.foldLeft(sucessfulFutures)(0.0)(_ + _).map(total => {
+            Future.foldLeft(price)(0.0)(_ + _).map(total => {
               onReply(
                 try {
+                  val completed = total == computePrice(order)
                   accountSvc.purchase(user, total)
                   s"La commande ${inner(order)} est ${if (!completed) then "partiellement" else ""} prête, vous pouvez venir la chercher au comptoir pour un total de ${total}! Votre nouveau solde est de ${accountSvc.getAccountBalance(user)} CHF."
                 } catch {
