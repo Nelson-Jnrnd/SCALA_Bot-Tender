@@ -4,6 +4,7 @@ import scala.concurrent.Future
 import Utils.FutureOps
 import concurrent.duration.{DurationInt, DurationDouble}
 import concurrent.ExecutionContext.Implicits.global
+import scala.util.*
 
 
 class AnalyzerService(productSvc: ProductService,
@@ -30,6 +31,27 @@ class AnalyzerService(productSvc: ProductService,
       case Or(left, right) => math.min(computePrice(left), computePrice(right)) // We take the cheapest product
       case And(left, right) => computePrice(left) + computePrice(right)
       case _ => 0.0
+      // In our implementation, Order is not a computational node it either has a Product child or an Or/And child
+    }
+  }
+
+  def computeFuturePrice(t: ExprTree): List[Future[Double]] = {
+    t match {
+      case Product(product, brand, quantity) => {
+        List(FutureOps.randomSchedule(1.second, 0.5.second, 0.8).transformWith {
+          case Success(_) => Future.successful(computePrice(t))
+          case Failure(_) => Future.failed(new Exception("Failed future"))
+        })
+      }
+      case Price(order) => computeFuturePrice(order)
+      case Or(left, right) => // We take the cheapest product
+        if (computePrice(left) < computePrice(right)) {
+          computeFuturePrice(left)
+        } else {
+          computeFuturePrice(right)
+        }
+      case And(left, right) => computeFuturePrice(left) ++ computeFuturePrice(right)
+      case _ => List(Future.successful(0.0))
       // In our implementation, Order is not a computational node it either has a Product child or an Or/And child
     }
   }
@@ -78,21 +100,25 @@ class AnalyzerService(productSvc: ProductService,
       case Order(order) => { // order is either a Product or an Or/And node
         session.getCurrentUser match {
           case Some(user) => {
-            FutureOps.randomSchedule(
-              1.second, 0.5.second, 0.5
-              ).map(_ => onReply(
-                  {
-                    val price = computePrice(order)
-                    try {
-                      accountSvc.purchase(user, price)
-                      s"Vous avez acheté ${inner(order)} pour un total de $price CHF. Votre solde est maintenant de CHF ${accountSvc.getAccountBalance(user)}."
-                    } catch {
-                      case e: Data.NotEnoughMoneyException => s"Vous n'avez pas assez d'argent pour acheter ${inner(order)}."
-                      case e: Data.CouldNotFindAccountException => s"Faut ouvrir un compte mon coco."
-                    }
-                  }
-                  ))
-              s"Votre commande est en cours de préparation: ${inner(order)}."            
+            val price = computeFuturePrice(order)
+            // Check if any future failed
+            var completed = true
+            price.foreach((f) => {
+              f.recover((_) => completed = false)
+            })
+            val sucessfulFutures = price.map((f) => f.recover((_) => 0.0))
+            Future.foldLeft(sucessfulFutures)(0.0)(_ + _).map(total => {
+              onReply(
+                try {
+                  accountSvc.purchase(user, total)
+                  s"La commande ${inner(order)} est ${if (!completed) then "partiellement" else ""} prête, vous pouvez venir la chercher au comptoir pour un total de ${total}! Votre nouveau solde est de ${accountSvc.getAccountBalance(user)} CHF."
+                } catch {
+                  case e: Data.NotEnoughMoneyException => s"Vous n'avez pas assez d'argent pour acheter ${inner(order)}."
+                  case e: Data.CouldNotFindAccountException => s"Faut ouvrir un compte mon coco."
+                })
+              })
+            
+            s"Votre commande est en cours de préparation: ${inner(order)}."            
           }
           case None => "Ptdr t'es qui ?"
         }
