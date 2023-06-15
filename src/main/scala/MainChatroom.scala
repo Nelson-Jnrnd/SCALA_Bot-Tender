@@ -1,3 +1,4 @@
+import Chat.AnalyzerService
 import Web.{UsersRoutes, MessagesRoutes, StaticRoutes}
 import Chat._
 import Data._

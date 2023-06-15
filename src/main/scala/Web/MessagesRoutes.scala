@@ -19,6 +19,17 @@ class MessagesRoutes(tokenizerSvc: TokenizerService,
                      accountSvc: AccountService,
                      sessionSvc: SessionService)(implicit val log: cask.Logger) extends cask.Routes:
     import Decorators.getSession
+    analyzerSvc.setCallback(
+        (msg: String) => {
+            println(s"Message received: $msg")
+            val msgID = msgSvc.add(
+                            sender = "bot",
+                            msg = Layouts.message(msg),
+                            mention = None
+            )
+            updateMessages()
+        }
+    )
 
     val subscribers = new scala.collection.mutable.HashSet[cask.WsChannelActor]()
 

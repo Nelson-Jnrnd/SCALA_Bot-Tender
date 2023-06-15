@@ -1,5 +1,9 @@
 package Chat
 import Data.{AccountService, ProductService, Session}
+import scala.concurrent.Future
+import Utils.FutureOps
+import concurrent.duration.{DurationInt, DurationDouble}
+import concurrent.ExecutionContext.Implicits.global
 
 
 class AnalyzerService(productSvc: ProductService,
@@ -7,6 +11,7 @@ class AnalyzerService(productSvc: ProductService,
   import ExprTree._
 
   val startingSolde = 30.0
+  var onReply: String => Unit = println(_)
   /**
     * Compute the price of the current node, then returns it. If the node is not a computational node, the method
     * returns 0.0.
@@ -28,6 +33,12 @@ class AnalyzerService(productSvc: ProductService,
       // In our implementation, Order is not a computational node it either has a Product child or an Or/And child
     }
   }
+
+  /**
+    * Set the callback function that will be called when the bot has to reply to a message.
+    * @param onReply the callback function
+    */
+  def setCallback(onReply: String => Unit) = this.onReply = onReply
 
   /**
     * Return the output text of the current node, in order to write it in console.
@@ -67,14 +78,21 @@ class AnalyzerService(productSvc: ProductService,
       case Order(order) => { // order is either a Product or an Or/And node
         session.getCurrentUser match {
           case Some(user) => {
-            val price = computePrice(order)
-            try {
-              accountSvc.purchase(user, price)
-              s"Vous avez acheté ${inner(order)} pour un total de $price CHF. Votre solde est maintenant de CHF ${accountSvc.getAccountBalance(user)}."
-            } catch {
-              case e: Data.NotEnoughMoneyException => s"Vous n'avez pas assez d'argent pour acheter ${inner(order)}."
-              case e: Data.CouldNotFindAccountException => s"Faut ouvrir un compte mon coco."
-            }
+            FutureOps.randomSchedule(
+              1.second, 0.5.second, 0.5
+              ).map(_ => onReply(
+                  {
+                    val price = computePrice(order)
+                    try {
+                      accountSvc.purchase(user, price)
+                      s"Vous avez acheté ${inner(order)} pour un total de $price CHF. Votre solde est maintenant de CHF ${accountSvc.getAccountBalance(user)}."
+                    } catch {
+                      case e: Data.NotEnoughMoneyException => s"Vous n'avez pas assez d'argent pour acheter ${inner(order)}."
+                      case e: Data.CouldNotFindAccountException => s"Faut ouvrir un compte mon coco."
+                    }
+                  }
+                  ))
+              s"Votre commande est en cours de préparation: ${inner(order)}."            
           }
           case None => "Ptdr t'es qui ?"
         }
@@ -82,5 +100,5 @@ class AnalyzerService(productSvc: ProductService,
       case Or(left, right) => s"${inner(left)} ou ${inner(right)}"
       case And(left, right) => s"${inner(left)} et ${inner(right)}"
     }
-      
+
 end AnalyzerService
